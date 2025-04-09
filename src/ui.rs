@@ -101,6 +101,10 @@ pub fn start(args: &mut [String]) {
         args[1] = id;
     }
     if args.is_empty() {
+        frame.event_handler(UI {});
+        frame.sciter_handler(UIHostHandler {});
+        page = "install.html";
+    } else if args[0] == "--ui" {
         std::thread::spawn(move || check_zombie());
         crate::common::check_software_update();
         frame.event_handler(UI {});
@@ -633,9 +637,9 @@ impl UI {
     pub fn verify2fa(&self, code: String) -> bool {
         verify2fa(code)
     }
-        
+
     fn verify_login(&self, raw: String, id: String) -> bool {
-       crate::verify_login(&raw, &id)
+        crate::verify_login(&raw, &id)
     }
 
     fn generate_2fa_img_src(&self, data: String) -> String {
