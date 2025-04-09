@@ -19,10 +19,10 @@ use rdev::{CGEventSourceStateID, CGEventTapLocation, VirtualInput};
 use scrap::wayland::pipewire::RDP_SESSION_INFO;
 use std::{
     convert::TryFrom,
-    ops::{Deref, DerefMut, Sub},
+    ops::{Deref, DerefMut},
     sync::atomic::{AtomicBool, Ordering},
     thread,
-    time::{self, Duration, Instant},
+    time::{self, Instant},
 };
 #[cfg(windows)]
 use winapi::um::winuser::WHEEL_DELTA;
@@ -447,17 +447,13 @@ lazy_static::lazy_static! {
 }
 static EXITING: AtomicBool = AtomicBool::new(false);
 
-const MOUSE_MOVE_PROTECTION_TIMEOUT: Duration = Duration::from_millis(1_000);
-// Actual diff of (x,y) is (1,1) here. But 5 may be tolerant.
-const MOUSE_ACTIVE_DISTANCE: i32 = 5;
-
 static RECORD_CURSOR_POS_RUNNING: AtomicBool = AtomicBool::new(false);
 
 // https://github.com/rustdesk/rustdesk/issues/9729
 // We need to do some special handling for macOS when using the legacy mode.
 #[cfg(target_os = "macos")]
 static LAST_KEY_LEGACY_MODE: AtomicBool = AtomicBool::new(true);
-// We use enigo to 
+// We use enigo to
 // 1. Simulate mouse events
 // 2. Simulate the legacy mode key events
 // 3. Simulate the functioin key events, like LockScreen
@@ -877,14 +873,9 @@ pub fn update_latest_input_cursor_time(conn: i32) {
     lock.time = get_time();
 }
 
-#[inline]
-fn get_last_input_cursor_pos() -> (i32, i32) {
-    let lock = LATEST_PEER_INPUT_CURSOR.lock().unwrap();
-    (lock.x, lock.y)
-}
-
 // check if mouse is moved by the controlled side user to make controlled side has higher mouse priority than remote.
 fn active_mouse_(conn: i32) -> bool {
+    let _ = conn;
     true
     /* this method is buggy (not working on macOS, making fast moving mouse event discarded here) and added latency (this is blocking way, must do in async way), so we disable it for now
     // out of time protection

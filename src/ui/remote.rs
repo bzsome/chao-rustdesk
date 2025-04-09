@@ -320,9 +320,6 @@ impl InvokeUiSession for SciterHandler {
             ConnType::DEFAULT_CONN => {
                 crate::keyboard::client::start_grab_loop();
             }
-            // Left empty code from compilation.
-            // Please replace the code in the PR.
-            ConnType::VIEW_CAMERA => {}
         }
     }
 

@@ -418,17 +418,6 @@ pub fn is_modifier(key: &rdev::Key) -> bool {
 }
 
 #[inline]
-pub fn is_modifier_code(evt: &KeyEvent) -> bool {
-    match evt.union {
-        Some(key_event::Union::Chr(code)) => {
-            let key = rdev::linux_key_from_code(code);
-            is_modifier(&key)
-        }
-        _ => false,
-    }
-}
-
-#[inline]
 pub fn is_numpad_rdev_key(key: &rdev::Key) -> bool {
     matches!(
         key,

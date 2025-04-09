@@ -1064,7 +1064,7 @@ mod desktop {
             }
             self.display = self
                 .display
-                .replace(&whoami::hostname(), "")
+                .replace(&whoami::fallible::hostname().unwrap_or_default(), "")
                 .replace("localhost", "");
         }
 

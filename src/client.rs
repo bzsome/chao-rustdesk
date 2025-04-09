@@ -3560,27 +3560,6 @@ pub mod peer_online {
         tcp::FramedStream,
         ResultType,
     };
-
-    pub async fn query_online_states<F: FnOnce(Vec<String>, Vec<String>)>(ids: Vec<String>, f: F) {
-        let test = false;
-        if test {
-            sleep(1.5).await;
-            let mut onlines = ids;
-            let offlines = onlines.drain((onlines.len() / 2)..).collect();
-            f(onlines, offlines)
-        } else {
-            let query_timeout = std::time::Duration::from_millis(3_000);
-            match query_online_states_(&ids, query_timeout).await {
-                Ok((onlines, offlines)) => {
-                    f(onlines, offlines);
-                }
-                Err(e) => {
-                    log::debug!("query onlines, {}", &e);
-                }
-            }
-        }
-    }
-
     async fn create_online_stream() -> ResultType<FramedStream> {
         let (rendezvous_server, _servers, _contained) =
             crate::get_rendezvous_server(READ_TIMEOUT).await;
@@ -3658,6 +3637,26 @@ pub mod peer_online {
 
         bail!("Failed to query online states, no online response");
     }
+
+    pub async fn query_online_states<F: FnOnce(Vec<String>, Vec<String>)>(ids: Vec<String>, f: F) {
+        let test = false;
+        if test {
+            sleep(1.5).await;
+            let mut onlines = ids;
+            let offlines = onlines.drain((onlines.len() / 2)..).collect();
+            f(onlines, offlines)
+        } else {
+            let query_timeout = std::time::Duration::from_millis(3_000);
+            match query_online_states_(&ids, query_timeout).await {
+                Ok((onlines, offlines)) => {
+                    f(onlines, offlines);
+                }
+                Err(e) => {
+                    log::debug!("query onlines, {}", &e);
+                }
+            }
+        }
+    } 
 
     #[cfg(test)]
     mod tests {

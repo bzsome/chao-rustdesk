@@ -1268,7 +1268,7 @@ impl Connection {
 
         #[cfg(not(target_os = "android"))]
         {
-            pi.hostname = whoami::hostname();
+            pi.hostname = whoami::fallible::hostname().unwrap_or_default();
             pi.platform = whoami::platform().to_string();
         }
         #[cfg(target_os = "android")]

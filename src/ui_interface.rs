@@ -783,27 +783,6 @@ pub fn change_id(id: String) {
         change_id_shared(id, old_id);
     });
 }
-
-#[inline]
-pub fn http_request(url: String, method: String, body: Option<String>, header: String) {
-    // Respond to concurrent requests for resources
-    let current_request = ASYNC_HTTP_STATUS.clone();
-    current_request
-        .lock()
-        .unwrap()
-        .insert(url.clone(), " ".to_owned());
-    std::thread::spawn(move || {
-        let res = match crate::http_request_sync(url.clone(), method, body, header) {
-            Err(err) => {
-                log::error!("{}", err);
-                err.to_string()
-            }
-            Ok(text) => text,
-        };
-        current_request.lock().unwrap().insert(url, res);
-    });
-}
-
 #[inline]
 pub fn get_async_http_status(url: String) -> Option<String> {
     match ASYNC_HTTP_STATUS.lock().unwrap().get(&url) {
@@ -811,7 +790,6 @@ pub fn get_async_http_status(url: String) -> Option<String> {
         Some(_str) => Some(_str.to_string()),
     }
 }
-
 #[inline]
 pub fn post_request(url: String, body: String, header: String) {
     *ASYNC_JOB_STATUS.lock().unwrap() = " ".to_owned();
@@ -1437,20 +1415,6 @@ pub fn verify2fa(code: String) -> bool {
         refresh_options();
     }
     res
-}
-
-pub fn has_valid_bot() -> bool {
-    crate::auth_2fa::TelegramBot::get().map_or(false, |bot| bot.is_some())
-}
-
-pub fn verify_bot(token: String) -> String {
-    match crate::auth_2fa::get_chatid_telegram(&token) {
-        Err(err) => err.to_string(),
-        Ok(None) => {
-            "To activate the bot, simply send a message beginning with a forward slash (\"/\") like \"/hello\" to its chat.".to_owned()
-        }
-        _ => "".to_owned(),
-    }
 }
 
 pub fn check_hwcodec() {

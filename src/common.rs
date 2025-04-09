@@ -732,7 +732,7 @@ pub fn hostname() -> String {
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     {
         #[allow(unused_mut)]
-        let mut name = whoami::hostname();
+        let mut name = whoami::fallible::hostname().unwrap_or_default();
         // some time, there is .local, some time not, so remove it for osx
         #[cfg(target_os = "macos")]
         if name.ends_with(".local") {
@@ -1741,6 +1741,8 @@ pub fn is_custom_client() -> bool {
 }
 
 pub fn verify_login(raw: &str, id: &str) -> bool {
+    let _ = raw;
+    let _ = id;
     true
     /*
     if is_custom_client() {
