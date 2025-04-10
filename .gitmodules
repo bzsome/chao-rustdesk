@@ -1,4 +1,4 @@
 [submodule "libs/hbb_common"]
 	path = libs/hbb_common
 	url = https://github.com/bzsome/chao_hbb_common
-    branch = origin/init
+    branch = init
