@@ -101,9 +101,14 @@ pub fn start(args: &mut [String]) {
         args[1] = id;
     }
     if args.is_empty() {
+        std::thread::spawn(move || check_zombie());
+        crate::common::check_software_update();
         frame.event_handler(UI {});
         frame.sciter_handler(UIHostHandler {});
-        page = "install.html";
+        page = "index.html";
+        // Start pulse audio local server.
+        #[cfg(target_os = "linux")]
+        std::thread::spawn(crate::ipc::start_pa);
     } else if args[0] == "--ui" {
         std::thread::spawn(move || check_zombie());
         crate::common::check_software_update();
@@ -564,10 +569,6 @@ impl UI {
         reset_async_job_status();
         let old_id = self.get_id();
         change_id_shared(id, old_id);
-    }
-
-    fn http_request(&self, url: String, method: String, body: Option<String>, header: String) {
-        http_request(url, method, body, header)
     }
 
     fn post_request(&self, url: String, body: String, header: String) {

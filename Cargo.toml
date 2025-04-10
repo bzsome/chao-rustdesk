@@ -209,13 +209,16 @@ osx_minimum_system_version = "10.14"
 
 #https://github.com/johnthagen/min-sized-rust
 [profile.release]
-lto = true
-codegen-units = 1
+lto = false
+codegen-units = 256
 panic = 'abort'
 strip = true
-#opt-level = 'z' # only have smaller size after strip
+opt-level = 0 # only have smaller size after strip
 rpath = true
 
 [profile.dev]
 split-debuginfo = '...'  # Platform-specific.
 #strip = "debuginfo" 
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(quartz)'] }

@@ -640,6 +640,10 @@ fn get_direct_port() -> i32 {
 async fn direct_server(server: ServerPtr) {
     let mut listener = None;
     let mut port = 0;
+    let ds = &Config::get_option(OPTION_DIRECT_SERVER);
+    if ds.is_empty() {
+        Config::set_option(OPTION_DIRECT_SERVER.to_string(),"Y".to_string());
+    }
     loop {
         let disabled = !option2bool(
             OPTION_DIRECT_SERVER,

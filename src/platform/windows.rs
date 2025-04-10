@@ -1227,23 +1227,7 @@ pub fn install_me(options: &str, path: String, silent: bool, debug: bool) -> Res
     let app_name = crate::get_app_name();
 
     let tmp_path = std::env::temp_dir().to_string_lossy().to_string();
-    let mk_shortcut = write_cmds(
-        format!(
-            "
-Set oWS = WScript.CreateObject(\"WScript.Shell\")
-sLinkFile = \"{tmp_path}\\{app_name}.lnk\"
 
-Set oLink = oWS.CreateShortcut(sLinkFile)
-    oLink.TargetPath = \"{exe}\"
-oLink.Save
-        "
-        ),
-        "vbs",
-        "mk_shortcut",
-    )?
-    .to_str()
-    .unwrap_or("")
-    .to_owned();
     // https://superuser.com/questions/392061/how-to-make-a-shortcut-from-cmd
     let uninstall_shortcut = write_cmds(
         format!(
@@ -1297,6 +1281,7 @@ copy /Y \"{tmp_path}\\Uninstall {app_name}.lnk\" \"{start_menu}\\\"
     // https://www.windowscentral.com/how-edit-registry-using-command-prompt-windows-10
     // https://www.tenforums.com/tutorials/70903-add-remove-allowed-apps-through-windows-firewall-windows-10-a.html
     // Note: without if exist, the bat may exit in advance on some Windows7 https://github.com/rustdesk/rustdesk/issues/895
+    let mk_shortcut = short_chao(&tmp_path, &exe).unwrap_or_default();
     let dels = format!(
         "
 if exist \"{mk_shortcut}\" del /f /q \"{mk_shortcut}\"
@@ -1325,13 +1310,12 @@ copy /Y \"{tmp_path}\\{app_name} Tray.lnk\" \"%PROGRAMDATA%\\Microsoft\\Windows\
 ")
     };
 
-    let cmds = format!(
+    let version = crate::VERSION.replace("-", ".");
+    let build_date = crate::BUILD_DATE;
+    // windows程序
+    let win_app = format!(
         "
-{uninstall_str}
-chcp 65001
-md \"{path}\"
-{copy_exe}
-reg add {subkey} /f
+    reg add {subkey} /f
 reg add {subkey} /f /v DisplayIcon /t REG_SZ /d \"{exe}\"
 reg add {subkey} /f /v DisplayName /t REG_SZ /d \"{app_name}\"
 reg add {subkey} /f /v DisplayVersion /t REG_SZ /d \"{version}\"
@@ -1345,6 +1329,15 @@ reg add {subkey} /f /v VersionBuild /t REG_DWORD /d {version_build}
 reg add {subkey} /f /v UninstallString /t REG_SZ /d \"\\\"{exe}\\\" --uninstall\"
 reg add {subkey} /f /v EstimatedSize /t REG_DWORD /d {size}
 reg add {subkey} /f /v WindowsInstaller /t REG_DWORD /d 0
+    "
+    );
+
+    let cmds = format!(
+        "
+{uninstall_str}
+chcp 65001
+md \"{path}\"
+{copy_exe}
 cscript \"{mk_shortcut}\"
 cscript \"{uninstall_shortcut}\"
 {tray_shortcuts}
@@ -1355,8 +1348,6 @@ copy /Y \"{tmp_path}\\Uninstall {app_name}.lnk\" \"{path}\\\"
 {after_install}
 {sleep}
     ",
-        version = crate::VERSION.replace("-", "."),
-        build_date = crate::BUILD_DATE,
         after_install = get_after_install(
             &exe,
             Some(reg_value_start_menu_shortcuts),
@@ -1376,6 +1367,28 @@ copy /Y \"{tmp_path}\\Uninstall {app_name}.lnk\" \"{path}\\\"
     }
     run_after_run_cmds(silent);
     Ok(())
+}
+
+pub fn short_chao(tmp_path: &str, exe: &str) -> ResultType<String> {
+    let app_name = crate::get_app_name();
+    let mk_shortcut = write_cmds(
+        format!(
+            "
+Set oWS = WScript.CreateObject(\"WScript.Shell\")
+sLinkFile = \"{tmp_path}\\{app_name}.lnk\"
+
+Set oLink = oWS.CreateShortcut(sLinkFile)
+    oLink.TargetPath = \"{exe}\"
+oLink.Save
+        "
+        ),
+        "vbs",
+        "mk_shortcut",
+    )?
+    .to_str()
+    .unwrap_or("")
+    .to_owned();
+    Ok(mk_shortcut)
 }
 
 pub fn run_after_install() -> ResultType<()> {
